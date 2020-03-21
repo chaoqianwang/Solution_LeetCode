@@ -1,4 +1,5 @@
 import javafx.util.Pair;
+import sun.reflect.generics.tree.Tree;
 
 import java.awt.*;
 import java.util.*;
@@ -173,7 +174,7 @@ public class Solution {
         return answer;
     }
 
-    public class TreeNode {
+    public static class TreeNode {
         int val;
         TreeNode left;
         TreeNode right;
@@ -642,54 +643,359 @@ public class Solution {
                     return false;
                 }
                 if (s.charAt(i) == ')' && stack.peekLast() == '(' ||
-                    s.charAt(i) == ']' && stack.peekLast() == '[' ||
-                    s.charAt(i) == '}' && stack.peekLast() == '{') {
+                        s.charAt(i) == ']' && stack.peekLast() == '[' ||
+                        s.charAt(i) == '}' && stack.peekLast() == '{') {
                     stack.removeLast();
-                }else{
+                } else {
                     return false;
                 }
             }
         }
-        if(stack.isEmpty()){
+        if (stack.isEmpty()) {
             return true;
         }
         return false;
     }
 
     public ListNode mergeTwoLists(ListNode l1, ListNode l2) {
-        if(l1==null) return l2;
-        if(l2==null) return l1;
+        if (l1 == null) return l2;
+        if (l2 == null) return l1;
 
-        ListNode head=null;
-        ListNode p1=l1,p2=l2,p3=head;
+        ListNode head = null;
+        ListNode p1 = l1, p2 = l2, p3 = head;
         ListNode min;
 
         while (p1 != null && p2 != null) {
-            if(p1.val<p2.val){
-                min=p1;
-                p1=p1.next;
-            }else{
-                min=p2;
-                p2=p2.next;
+            if (p1.val < p2.val) {
+                min = p1;
+                p1 = p1.next;
+            } else {
+                min = p2;
+                p2 = p2.next;
             }
 
-            if(head==null){
-                head=min;
-                p3=head;
-            }else{
-                p3.next=min;
-                p3=p3.next;
+            if (head == null) {
+                head = min;
+                p3 = head;
+            } else {
+                p3.next = min;
+                p3 = p3.next;
             }
         }
 
-        if(p1!=null) p3.next=p1;
-        if(p2!=null) p3.next=p2;
+        if (p1 != null) p3.next = p1;
+        if (p2 != null) p3.next = p2;
 
         return head;
     }
 
-    public static void main(String[] args) {
 
-        System.out.println(new Solution().isValid("{[]}"));
+    public List<List<Integer>> subsets(int[] nums) {
+        List<List<Integer>> answer = new ArrayList<>();
+        if (nums == null || nums.length == 0) {
+            return answer;
+        }
+
+        subsetsCore(nums, 0, answer, new ArrayList<>());
+        return answer;
+    }
+
+    public void subsetsCore(int[] nums, int index, List<List<Integer>> answer, List<Integer> currentAns) {
+        answer.add(new ArrayList<>(currentAns));
+        for (int i = index; i < nums.length; i++) {
+            currentAns.add(nums[i]);
+            subsetsCore(nums, i + 1, answer, currentAns);
+            currentAns.remove(currentAns.size() - 1);
+        }
+    }
+
+//    public List<List<Integer>> subsets(int[] nums) {
+//        List<List<Integer>> answer=new ArrayList<>();
+//        if (nums == null || nums.length == 0) {
+//            return answer;
+//        }
+//
+//        subsetsCore(nums,0,answer,new ArrayList<>());
+//        return answer;
+//    }
+//
+//    public void subsetsCore(int[] nums, int index, List<List<Integer>> answer, List<Integer> currentAns) {
+//        if(index>=nums.length){
+//            answer.add(new ArrayList<>(currentAns));
+//            return;
+//        }
+//        List<Integer> currentAnsTmp=new ArrayList<>(currentAns);
+//        subsetsCore(nums,index+1,answer,currentAnsTmp);
+//        currentAnsTmp.add(nums[index]);
+//        subsetsCore(nums,index+1,answer,currentAnsTmp);
+//    }
+
+    public int hammingDistance(int x, int y) {
+        int answer = 0;
+        int XorAnswer = x ^ y;
+        int point = 1;
+
+        for (int i = 0; i < 32; i++) {
+            if ((XorAnswer & point << i) != 0) {
+                answer++;
+            }
+        }
+
+        return answer;
+    }
+
+    public int[] countBits(int num) {
+        int[] answer = new int[num + 1];
+        Arrays.fill(answer, -1);
+        for (int i = num; i >= 0; i--) {
+            countBitsCore(i, answer);
+        }
+        return answer;
+    }
+
+    //    public int countBitsCore(int num, int[] answer){
+//        if(num==0) return answer[num]=0;
+//        if(answer[num]!=-1) return answer[num];
+//        answer[num]=num%2==0?countBitsCore(num>>1,answer):countBitsCore(num>>1,answer)+1;
+//        return answer[num];
+//    }
+    public int countBitsCore(int num, int[] answer) {
+        if (num == 0) return answer[num] = 0;
+        if (answer[num] != -1) return answer[num];
+        answer[num] = num % 2 == 0 ? countBitsCore(num & (num - 1), answer) + 1 : countBitsCore(num - 1, answer) + 1;
+        return answer[num];
+    }
+
+    public List<List<Integer>> permute(int[] nums) {
+        List<List<Integer>> answer = new ArrayList<>();
+        if (nums == null || nums.length == 0) return answer;
+
+        List<Integer> numsList = new ArrayList<>();
+        boolean[] visited = new boolean[nums.length];
+
+        for (int i = 0; i < nums.length; i++) {
+            numsList.add(nums[i]);
+        }
+        permuteCore(numsList, visited, new ArrayList<>(), answer);
+        return answer;
+    }
+
+    public void permuteCore(List<Integer> numsList, boolean[] visited, List<Integer> currAns, List<List<Integer>> answer) {
+        if (currAns.size() == numsList.size()) {
+            answer.add(new ArrayList<>(currAns));
+            return;
+        }
+
+//        List<Integer> currAnsTmp=new ArrayList<>(currAns);
+        for (int i = 0; i < numsList.size(); i++) {
+            if (visited[i]) continue;
+            currAns.add(numsList.get(i));
+            visited[i] = true;
+            permuteCore(numsList, visited, currAns, answer);
+            currAns.remove(numsList.get(i));
+            visited[i] = false;
+        }
+    }
+
+    public TreeNode invertTree(TreeNode root) {
+        if (root == null || (root.left == null && root.right == null)) {
+            return root;
+        }
+
+        TreeNode tmp = root.left;
+        root.left = invertTree(root.right);
+        root.right = invertTree(tmp);
+
+        return root;
+    }
+
+    public static final Character LEFT = '(';
+    public static final Character RIGHT = ')';
+
+//    public List<String> generateParenthesis(int n) {
+//        List<String> answer=new ArrayList<>();
+//        if(n<=0) return answer;
+//
+//        generateParenthesisCore(n,n,new StringBuffer(),answer);
+//        return answer;
+//    }
+//
+//    public void generateParenthesisCore(int n, int m, StringBuffer path,
+//                                        List<String> answer){
+//        //左括号没有了，检查是否合法
+//        if(n<=0){
+//            for(int i=0;i<m;i++){
+//                path.append(')');
+//            }
+//            if(checkPath(path)){
+//                answer.add(path.toString());
+//            }
+//            for(int i=0;i<m;i++){
+//                path.deleteCharAt(path.length()-1-i);
+//            }
+//            return;
+//        }
+//        //右括号没有了，左括号剩余，直接返回
+//        if(m<=0){
+//            return;
+//        }
+//
+//        //左右括号都还有，分别追加左括号与有括号，下一层次递归
+//        //第一种写法，输出结果错误：
+//        path.append('(');
+//        generateParenthesisCore(n-1,m,path,answer);
+//        path.deleteCharAt(path.length()-1);
+//        path.append(')');
+//        generateParenthesisCore(n,m-1,path,answer);
+//        path.deleteCharAt(path.length()-1);
+//        //第二种写法：
+//        generateParenthesisCore(n-1,m,new StringBuffer(path).append('('),answer);
+//        generateParenthesisCore(n,m-1,new StringBuffer(path).append(')'),answer);
+//    }
+//
+//    public boolean checkPath(StringBuffer path){
+//        if(path.length()==0){
+//            return false;
+//        }
+//        LinkedList<Character> stack=new LinkedList<>();
+//
+//        for(int i=0;i<path.length();i++){
+//            if(path.charAt(i)=='('){
+//                stack.push(path.charAt(i));
+//            }
+//            else{
+//                if(stack.isEmpty()) return false;
+//                if(stack.pop()!='(') return false;
+//            }
+//        }
+//        if(!stack.isEmpty()) return false;
+//        return true;
+//    }
+
+//    public List<String> generateParenthesis(int n){
+//        List<String> answer=new ArrayList<>();
+//        if (n <= 0) {
+//            return answer;
+//        }
+//        generateParenthesisCore(0,0,n,new StringBuffer(),answer);
+//        return answer;
+//    }
+//
+//    public void generateParenthesisCore(int l, int r, int n, StringBuffer currAns, List<String> answer) {
+//        if(l>n||r>n||l<r) return;
+//        if(l==n&&r==n) {
+//            answer.add(currAns.toString());
+//            return;
+//        }
+//
+//        generateParenthesisCore(l+1, r, n, new StringBuffer(currAns).append('('), answer);
+//        generateParenthesisCore(l, r+1, n, new StringBuffer(currAns).append(')'), answer);
+//    }
+
+    public List<String> generateParenthesis(int n) {
+        List<String> answer = new ArrayList<>();
+        if (n <= 0) return answer;
+
+        generateParenthesisCore(n, n, new StringBuffer(), answer);
+        return answer;
+    }
+
+    public void generateParenthesisCore(int n, int m, StringBuffer path,
+                                        List<String> answer) {
+
+        if (n < 0 || m < 0 || n > m) return;
+        if (n == 0 && m == 0) {
+            answer.add(path.toString());
+            return;
+        }
+        generateParenthesisCore(n - 1, m, path.append('('), answer);
+        path.deleteCharAt(path.length()-1);
+        generateParenthesisCore(n, m - 1, path.append(')'), answer);
+        path.deleteCharAt(path.length()-1);
+    }
+
+    public List<Integer> inorderTraversal(TreeNode root) {
+        List<Integer> answer=new ArrayList<>();
+        if(root==null) return answer;
+
+        LinkedList<TreeNode> stack=new LinkedList<>();
+        stack.push(root);
+
+        while(!stack.isEmpty()){
+            while (stack.peek().left != null) {
+                stack.push(stack.peek().left);
+            }
+            while(!stack.isEmpty()&&stack.peek().right==null){
+                TreeNode node=stack.pop();
+                answer.add(node.val);
+            }
+            if(!stack.isEmpty()){
+                TreeNode node=stack.pop();
+                answer.add(node.val);
+                stack.push(node.right);
+            }
+        }
+        return answer;
+    }
+
+    public List<List<Integer>> combinationSum(int[] candidates, int target) {
+        List<List<Integer>> answer=new ArrayList<>();
+        if (candidates == null || candidates.length == 0 || target <= 0) {
+            return answer;
+        }
+
+        Arrays.sort(candidates);
+        combinationSumCore(0,candidates,target,candidates[0],new ArrayList<>(),answer);
+        return answer;
+    }
+
+    public void combinationSumCore(int first, int[] cadidates, int target, int min,
+                               List<Integer> currAns, List<List<Integer>> answer){
+        if(target==0){
+            answer.add(new ArrayList<>(currAns));
+            return;
+        }
+
+        if(target<min){
+            return;
+        }
+
+        for(int i=first;i<cadidates.length;i++){
+            currAns.add(cadidates[i]);
+            combinationSumCore(i,cadidates,target-cadidates[i],cadidates[i],currAns,answer);
+            currAns.remove(currAns.size()-1);
+        }
+    }
+
+//    public ListNode reverseList(ListNode head) {
+//        if(head==null||head.next==null) return head;
+//
+//        ListNode p1=head,p2=head.next,p3=p2.next;
+//        head.next=null;
+//        while(p2!=null){
+//            p2.next=p1;
+//            p1=p2;
+//            p2=p3;
+//            if(p2!=null){
+//                p3=p2.next;
+//            }
+//        }
+//        return p1;
+//    }
+
+    public ListNode reverseList(ListNode head) {
+        if (head == null || head.next == null) return head;
+        ListNode newHead=reverseList(head.next);
+        head.next.next=head;
+        head.next=null;
+
+        return newHead;
+    }
+
+    public static void main(String[] args) {
+        TreeNode root=new TreeNode(3);
+        root.left=new TreeNode(1);
+        root.left.right=new TreeNode(2);
+        new Solution().inorderTraversal(root);
     }
 }

@@ -1,9 +1,16 @@
+import com.sun.javafx.sg.prism.NGRectangle;
 import javafx.util.Pair;
 import sun.reflect.generics.tree.Tree;
 
+import javax.transaction.TransactionRequiredException;
 import java.awt.*;
+import java.io.FilterReader;
+import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.*;
 
 public class Solution {
 
@@ -54,7 +61,7 @@ public class Solution {
         return new int[]{-1, -1};
     }
 
-    public class ListNode {
+    public static class ListNode {
         int val;
         ListNode next;
 
@@ -992,10 +999,290 @@ public class Solution {
         return newHead;
     }
 
+    public void flatten(TreeNode root) {
+        flattenCore(root);
+        System.out.println(1);
+    }
+
+    public TreeNode flattenCore(TreeNode root){
+        if(root==null||(root.left==null&&root.right==null)) return root;
+
+        //记录右子树
+        TreeNode rootRight=root.right;
+        //左子树展开，连接到root的右边
+        root.right=flattenCore(root.left);
+        root.left=null;
+        //找到当前链表的末尾
+        TreeNode node=root;
+        while(node.right!=null) node=node.right;
+        //右子树展开，连接到当前链表末尾的右侧
+        node.right=flattenCore(rootRight);
+        return root;
+    }
+
+    public void rotate(int[][] matrix) {
+        if(matrix==null) return;
+        int n=matrix.length;
+        //转置
+        for(int i=0;i<n;i++){
+            for(int j=i;j<n;j++){
+                int tmp=matrix[i][j];
+                matrix[i][j]=matrix[j][i];
+                matrix[j][i]=tmp;
+            }
+        }
+        //镜像
+        for(int i=0;i<n;i++){
+            for(int j=0;j<n/2;j++){
+                int tmp=matrix[i][j];
+                matrix[i][j]=matrix[i][n-1-j];
+                matrix[i][n-1-j]=tmp;
+            }
+        }
+    }
+
+//    public int[] productExceptSelf(int[] nums) {
+//        if (nums == null || nums.length == 0) {
+//            return nums;
+//        }
+//
+//        int n=nums.length;
+//        int[] leftRes=new int[n];
+//        int[] rightRes=new int[n];
+//        int[] answer=new int[n];
+//        leftRes[0]=nums[0];
+//        rightRes[n-1]=nums[n-1];
+//
+//        for(int i=1;i<n;i++){
+//            leftRes[i]=leftRes[i-1]*nums[i];
+//            rightRes[n-1-i]=rightRes[n-i]*nums[n-1-i];
+//        }
+//
+//        answer[0]=rightRes[1];
+//        answer[n-1]=leftRes[n-2];
+//        for(int i=1;i<n-1;i++){
+//            answer[i]=leftRes[i-1]*rightRes[i+1];
+//        }
+//        return answer;
+//    }
+
+    public int[] productExceptSelf(int[] nums) {
+        if (nums == null || nums.length == 0) {
+            return nums;
+        }
+
+        int n=nums.length;
+        int[] answer=new int[n];
+        answer[0]=1;
+        int rightRes=1;
+
+        for(int i=1;i<n;i++){
+            answer[i]=answer[i-1]*nums[i-1];
+        }
+
+        for(int i=n-1;i>=0;i--){
+            answer[i]=answer[i]*rightRes;
+            rightRes*=nums[i];
+        }
+        return answer;
+    }
+
+    private int numTrees(int n) {
+        int[] answer=new int[n+1];
+
+        answer[0]=1;
+        answer[1]=1;
+        numTreesCore(n, answer);
+
+        return answer[n];
+    }
+
+    public int numTreesCore(int n, int[] answer){
+        if(n<=1) return 1;
+        if(answer[n]!=0) return answer[n];
+
+        for(int i=1;i<=n;i++){
+            answer[i-1]=answer[i-1]==0?numTreesCore(i-1,answer):answer[i-1];
+            answer[n-i]=answer[n-i]==0?numTreesCore(n-i,answer):answer[n-i];
+            answer[n]=answer[n]+answer[i-1]+answer[n-i];
+        }
+        return answer[n];
+    }
+
+//    public int minPathSum(int[][] grid) {
+//        int m=grid.length;
+//        int n=grid[0].length;
+//
+//        return minPathSumCore(grid,n,m,0,0);
+//    }
+//
+//    public int minPathSumCore(int[][] grid, int n, int m, int x, int y){
+//        if(x==n-1&&y==m-1) return grid[x][y];
+//        if(x>=n||y>=m) {
+//            return Integer.MAX_VALUE;
+//        }
+//
+//        return grid[x][y]+Math.min(minPathSumCore(grid,n,m,x+1,y),
+//                minPathSumCore(grid,n,m,x,y+1));
+//    }
+
+    public int minPathSum(int[][] grid) {
+        int n=grid.length;
+        int m=grid[0].length;
+
+        int[][] dp=new int[n][m];
+        minPathSumCore(grid,n-1,m-1,dp);
+        return dp[n-1][m-1];
+    }
+
+    public int minPathSumCore(int[][] grid, int x, int y, int[][] dp){
+        if(dp[x][y]!=0) {
+            return dp[x][y];
+        }
+        if(x==0&&y==0){
+            return dp[x][y]=grid[0][0];
+        }
+        if(x==0&&y>0){
+            dp[x][y-1]=dp[x][y-1]==0?minPathSumCore(grid, x, y-1,dp):dp[x][y-1];
+            return dp[x][y]=grid[x][y]+dp[x][y-1];
+        }
+        if(x>0&&y==0){
+            dp[x-1][y]=dp[x-1][y]==0?minPathSumCore(grid, x-1, y,dp):dp[x-1][y];
+            return dp[x][y]=grid[x][y]+dp[x-1][y];
+        }
+
+        if(dp[x-1][y]==0){
+            dp[x-1][y]=minPathSumCore(grid, x-1, y, dp);
+        }
+        if(dp[x][y-1]==0){
+            dp[x][y-1]=minPathSumCore(grid, x, y-1, dp);
+        }
+        dp[x][y]=grid[x][y]+Math.min(dp[x-1][y],dp[x][y-1]);
+        return dp[x][y];
+    }
+
+//    public TreeNode buildTree(int[] preorder, int[] inorder) {
+//        TreeNode root=buildTreeCore(preorder, 0, preorder.length, inorder, 0, inorder.length);
+//        return root;
+//    }
+//
+//    public TreeNode buildTreeCore(int[] preorder, int left, int right, int[] inorder, int start, int end) {
+//        if(left>right||start>end||left>=preorder.length||start>=inorder.length) return null;
+//        if(start==end) return new TreeNode(inorder[start]);
+//
+//        TreeNode root=new TreeNode(preorder[left]);
+//
+//        for(int i=start;i<end;i++){
+//            if(inorder[i]==preorder[left]){
+//                int leftSize=i-start;
+//                if(leftSize!=0){
+//                    root.left=buildTreeCore(preorder, left+1, left+leftSize, inorder, start, i);
+//                }
+//
+//                int rightRoot=left+leftSize+1;
+//                root.right=buildTreeCore(preorder, rightRoot, right, inorder, i+1, end);
+//                break;
+//            }
+//        }
+//
+//        return root;
+//    }
+
+    public TreeNode buildTree(int[] preorder, int[] inorder) {
+        HashMap<Integer,Integer> map=new HashMap<>();
+        for(int i=0;i<inorder.length;i++){
+            map.put(inorder[i],i);
+        }
+
+        TreeNode root=buildTreeCore(preorder, 0, preorder.length, inorder, 0, inorder.length, map);
+        return root;
+    }
+
+    public TreeNode buildTreeCore(int[] preorder, int left, int right, int[] inorder, int start, int end, HashMap<Integer,Integer> map) {
+        if(left>right||start>end||left>=preorder.length||start>=inorder.length) return null;
+        if(start==end) return new TreeNode(inorder[start]);
+
+        TreeNode root=new TreeNode(preorder[left]);
+
+        int index=map.get(preorder[left]);
+        int leftSize=index-start;
+        if(leftSize!=0){
+            root.left=buildTreeCore(preorder, left+1, left+leftSize, inorder, start, index, map);
+        }
+        int rightRoot=left+leftSize+1;
+        root.right=buildTreeCore(preorder, rightRoot, right, inorder, index+1, end, map);
+
+        return root;
+    }
+
+    public ListNode sortList(ListNode head) {
+        if(head==null||head.next==null) return head;
+
+        //拆分为两个链表
+        ListNode slow=head, fast=head.next;
+        while(fast!=null&&fast.next!=null){
+            fast=fast.next.next;
+            slow=slow.next;
+        }
+
+        ListNode head1=head;
+        ListNode head2=slow.next;
+        slow.next=null;
+
+        ListNode newHead1=sortList(head1);
+        ListNode newHead2=sortList(head2);
+        ListNode newHead=mergeList(newHead1,newHead2);
+
+        return newHead;
+    }
+
+    public ListNode mergeList(ListNode head1, ListNode head2){
+        ListNode p1=head1,p2=head2;
+        ListNode newHead,tail;
+        if(p1.val<p2.val){
+            newHead=p1;
+            p1=p1.next;
+        }else{
+            newHead=p2;
+            p2=p2.next;
+        }
+
+        tail=newHead;
+        while(p1!=null&&p2!=null){
+            if(p1.val<p2.val){
+                tail.next=p1;
+                tail=tail.next;
+                p1=p1.next;
+            }else{
+                tail.next=p2;
+                tail=tail.next;
+                p2=p2.next;
+            }
+        }
+
+        if(p1!=null) tail.next=p1;
+        if(p2!=null) tail.next=p2;
+
+        return newHead;
+    }
+
+    public int[][] reconstructQueue(int[][] people) {
+        Arrays.sort(people, new Comparator<int[]>() {
+            @Override
+            public int compare(int[] o1, int[] o2) {
+                return o1[0]==o2[0]?o1[1]-o2[1]:o2[0]-o1[0];
+            }
+        });
+
+        LinkedList<int[]> answer=new LinkedList<>();
+        for (int[] p:people){
+            answer.add(p[1],p);
+        }
+
+        return answer.toArray(new int[people.length][2]);
+    }
+
     public static void main(String[] args) {
-        TreeNode root=new TreeNode(3);
-        root.left=new TreeNode(1);
-        root.left.right=new TreeNode(2);
-        new Solution().inorderTraversal(root);
+            ArrayList
     }
 }
